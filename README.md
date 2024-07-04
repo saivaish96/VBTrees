@@ -1,6 +1,6 @@
 # VB Trees
 
-VB Trees is a mobile application designed for the City of Virginia Beach that allows users to search and view detailed information about various tree species found in the city. The application provides an intuitive interface for users to explore tree data and learn more about the city's tree diversity.
+VB Trees is a mobile application designed/developed as a personal project for the City of Virginia Beach that allows users to search and view detailed information about various tree species found in the city. The application provides an intuitive interface for users to explore tree data and learn more about the city's tree diversity.
 
 ## Features
 
