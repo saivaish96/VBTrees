@@ -13,19 +13,20 @@ VB Trees is a mobile application designed for the City of Virginia Beach that al
 
 ### Main Page
 <img width="1728" alt="Screenshot 2024-07-02 at 11 56 06 AM" src="https://github.com/saivaish96/VBTrees/assets/13002463/b4472bee-0a1b-427c-8d9a-e09adf45925b">
-<img width="1728" alt="Screenshot 2024-07-02 at 11 56 06 AM" src="[https://github.com/saivaish96/VBTrees/assets/13002463/b4472bee-0a1b-427c-8d9a-e09adf45925b](https://github.com/saivaish96/VBTrees/assets/13002463/94af7b5d-9e83-4318-935b-8ee2c7d6cd41)">
+<img width="418" alt="Screenshot 2024-07-04 at 6 23 55 PM" src="https://github.com/saivaish96/VBTrees/assets/13002463/2d04f2a5-12d6-4460-90f2-721039e0c73f">
+
 The main page displays a search bar and a list of trees. Users can search for trees by name and see the total number of trees available.
 
 ### Search Results
 <img width="1728" alt="Screenshot 2024-07-02 at 11 56 13 AM" src="https://github.com/saivaish96/VBTrees/assets/13002463/259bf78d-1b8c-4f15-9902-73043b185e39">
-![WhatsApp Image 2024-07-04 at 6 17 08 PM (1)](https://github.com/saivaish96/VBTrees/assets/13002463/e00c275d-4c24-4987-a918-a0a6ab2e3945)
-![WhatsApp Image 2024-07-04 at 6 17 09 PM](https://github.com/saivaish96/VBTrees/assets/13002463/cc054aec-8ed3-4f92-a69c-dfb9192a5ea2)
+<img width="418" alt="Screenshot 2024-07-04 at 6 24 06 PM" src="https://github.com/saivaish96/VBTrees/assets/13002463/d938ecc1-3dfe-47b0-ade8-4b40b9332854">
+<img width="418" alt="Screenshot 2024-07-04 at 6 24 03 PM" src="https://github.com/saivaish96/VBTrees/assets/13002463/25d267ee-fa9f-4f45-b8b4-758eb34af7a0">
 
 When a search term is entered, the list of trees is filtered to show only the matching results.
 
 ### Tree Details
 <img width="1728" alt="Screenshot 2024-07-02 at 11 49 50 AM" src="https://github.com/saivaish96/VBTrees/assets/13002463/671d2bbd-854c-4220-a75a-9ace2a67620f">
-![WhatsApp Image 2024-07-04 at 6 17 09 PM (1)](https://github.com/saivaish96/VBTrees/assets/13002463/4522dd92-4c1a-4593-ba3c-2b0f25a7f5cd)
+<img width="418" alt="Screenshot 2024-07-04 at 6 24 10 PM" src="https://github.com/saivaish96/VBTrees/assets/13002463/08cd1f17-5bdb-4997-9144-7a6db888955b">
 
 Clicking on a tree card brings up detailed information about the selected tree, including an image and metadata.
 
