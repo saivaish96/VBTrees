@@ -1,0 +1,47 @@
+# CI build output
+dist/
+coverage/
+.expo/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+infra/**/terraform.tfvars
+# Dependencies
+node_modules/
+
+# Expo generated files
+.expo/
+dist/
+web-build/
+
+# Test coverage
+coverage/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Terraform generated files and state
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+infra/**/terraform.tfvars
+
+# macOS
+.DS_Store

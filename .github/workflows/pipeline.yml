@@ -1,0 +1,211 @@
+name: VB Trees CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  TERRAFORM_VERSION: "1.12.2"
+
+jobs:
+  application-quality:
+    name: Application Quality and Security
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Component tests
+        run: npm run test:component
+
+      - name: Test coverage
+        run: npm run test:ci
+
+      - name: Production web build
+        run: npm run build:web
+
+      - name: Dependency vulnerability scan
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: SonarQube scan and quality gate
+        if: >
+          env.SONAR_TOKEN != '' &&
+          vars.SONAR_PROJECT_KEY != '' &&
+          vars.SONAR_ORGANIZATION != ''
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+  terraform-quality:
+    name: Terraform Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive infra
+
+      - name: Initialize bootstrap configuration
+        run: terraform -chdir=infra/bootstrap init -backend=false
+
+      - name: Validate bootstrap configuration
+        run: terraform -chdir=infra/bootstrap validate
+
+      - name: Initialize application configuration
+        run: terraform -chdir=infra/app init -backend=false
+
+      - name: Validate application configuration
+        run: terraform -chdir=infra/app validate
+
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    needs:
+      - application-quality
+      - terraform-quality
+
+    permissions:
+      contents: read
+      id-token: write
+
+    concurrency:
+      group: vbtrees-production
+      cancel-in-progress: false
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Obtain temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: vbtrees-github-actions
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Initialize Terraform remote backend
+        run: |
+          terraform -chdir=infra/app init \
+            -reconfigure \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=vbtrees/prod/terraform.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Terraform plan
+        run: |
+          terraform -chdir=infra/app plan \
+            -out=tfplan
+
+      - name: Terraform apply
+        run: |
+          terraform -chdir=infra/app apply \
+            -auto-approve \
+            tfplan
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Build Expo web application
+        run: npm run build:web
+
+      - name: Read Terraform outputs
+        id: terraform-outputs
+        run: |
+          echo "bucket=$(terraform -chdir=infra/app output -raw website_bucket_name)" >> "$GITHUB_OUTPUT"
+          echo "distribution_id=$(terraform -chdir=infra/app output -raw cloudfront_distribution_id)" >> "$GITHUB_OUTPUT"
+          echo "website_url=$(terraform -chdir=infra/app output -raw website_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload website to S3
+        run: |
+          aws s3 sync \
+            dist/ \
+            "s3://${{ steps.terraform-outputs.outputs.bucket }}" \
+            --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.terraform-outputs.outputs.distribution_id }}" \
+            --paths "/*"
+
+      - name: Deployment summary
+        run: |
+          echo "## VB Trees deployment completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Website: ${{ steps.terraform-outputs.outputs.website_url }}" >> "$GITHUB_STEP_SUMMARY"
